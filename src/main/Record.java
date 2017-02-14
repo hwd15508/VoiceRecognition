@@ -14,57 +14,60 @@ public class Record {
 	private ByteArrayOutputStream out;
 	private byte[] byteArray;
 	private float[] floatArray;
+	private boolean stopped = false;
 
 	public Record(){
-			try {
-				out = new ByteArrayOutputStream();
-				format = new AudioFormat(AudioFormat.Encoding.PCM_UNSIGNED, 11025, 8, 1, 1, 1, false);
-				info = new DataLine.Info(TargetDataLine.class, format);
-				if(!AudioSystem.isLineSupported(info)){
-					System.err.println("Line not supported!");
-				}
-				final TargetDataLine targetLine = (TargetDataLine)AudioSystem.getLine(info);
-				targetLine.open();
-				Thread targetThread = new Thread(){
-					public void run(){
-						targetLine.start();
-						byte[] data = new byte[targetLine.getBufferSize()/5];
-						int readBytes;
-						System.out.println(targetLine.isActive());
-						System.out.println(targetLine.isRunning());
-						while(targetLine.isRunning()){
-							readBytes = targetLine.read(data, 0, data.length);
-							out.write(data, 0, readBytes);
-						}
-					}
-				};
-				targetThread.start();
-				Thread.sleep(5000);
-				targetLine.stop();
-				targetLine.close();
-				byteArray = out.toByteArray();
-			} catch (LineUnavailableException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			out = new ByteArrayOutputStream();
+			format = new AudioFormat(AudioFormat.Encoding.PCM_UNSIGNED, 4000, 8, 1, 1, 4000, false);
+			info = new DataLine.Info(TargetDataLine.class, format);
+			if(!AudioSystem.isLineSupported(info)){
+				System.err.println("Line not supported!");
 			}
 	}
 
-	public byte[] getByteArray(){
+	public void rec() {
+		try {
+			final TargetDataLine targetLine = (TargetDataLine) AudioSystem.getLine(info);
+			targetLine.open(format);
+			targetLine.start();
+			Thread targetThread = new Thread() {
+				public void run() {
+					byte[] data = new byte[targetLine.getBufferSize()/5];
+					int readBytes;
+					while (!stopped) {
+						readBytes = targetLine.read(data, 0, data.length);
+						if (readBytes > 0) {
+							out.write(data, 0, readBytes);
+						}
+					}
+				}
+			};
+			targetThread.start();
+			Thread.sleep(2000);
+			targetLine.stop();
+			targetLine.close();
+			stopped = true;
+			byteArray = out.toByteArray();
+		} catch (LineUnavailableException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public byte[] getByteArray() {
 		return byteArray;
 	}
 
-	public float[] getFloatArray(){
+	public float[] getFloatArray() {
 		floatArray = new float[byteArray.length];
-		for(int i = 0; i<byteArray.length; i++){
-			floatArray[i] = (float)byteArray[i];
+		for (int i = 0; i < byteArray.length; i++) {
+			floatArray[i] = (float) byteArray[i];
 		}
 		return floatArray;
 	}
 
-	public AudioFormat getFormat(){
+	public AudioFormat getFormat() {
 		return format;
 	}
 }
