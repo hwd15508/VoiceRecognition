@@ -14,15 +14,17 @@ public class Record {
 	private ByteArrayOutputStream out;
 	private byte[] byteArray;
 	private float[] floatArray;
+	private double[] doubleArray;
 	private boolean stopped = false;
+	private byte[] offset;
 
-	public Record(){
-			out = new ByteArrayOutputStream();
-			format = new AudioFormat(AudioFormat.Encoding.PCM_UNSIGNED, 4000, 8, 1, 1, 4000, false);
-			info = new DataLine.Info(TargetDataLine.class, format);
-			if(!AudioSystem.isLineSupported(info)){
-				System.err.println("Line not supported!");
-			}
+	public Record() {
+		out = new ByteArrayOutputStream();
+		format = new AudioFormat(AudioFormat.Encoding.PCM_UNSIGNED, 4000, 8, 1, 1, 4000, false);
+		info = new DataLine.Info(TargetDataLine.class, format);
+		if (!AudioSystem.isLineSupported(info)) {
+			System.err.println("Line not supported!");
+		}
 	}
 
 	public void rec() {
@@ -32,7 +34,7 @@ public class Record {
 			targetLine.start();
 			Thread targetThread = new Thread() {
 				public void run() {
-					byte[] data = new byte[targetLine.getBufferSize()/5];
+					byte[] data = new byte[targetLine.getBufferSize() / 5];
 					int readBytes;
 					while (!stopped) {
 						readBytes = targetLine.read(data, 0, data.length);
@@ -47,6 +49,15 @@ public class Record {
 			targetLine.stop();
 			targetLine.close();
 			stopped = true;
+			if (out.size() % 64 < 32) {
+				offset = new byte[64 - (out.size() % 64)];
+			} else {
+				offset = new byte[out.size() % 64];
+			}
+			for (int i = 0; i < offset.length; i++) {
+				offset[i] = 0;
+			}
+			out.write(offset, 0, offset.length);
 			byteArray = out.toByteArray();
 		} catch (LineUnavailableException e) {
 			e.printStackTrace();
@@ -57,6 +68,14 @@ public class Record {
 
 	public byte[] getByteArray() {
 		return byteArray;
+	}
+
+	public double[] getDoubleArray(){
+		doubleArray = new double[byteArray.length];
+		for(int i = 0; i<byteArray.length; i++){
+				doubleArray[i] = (double) byteArray[i];
+		}
+		return doubleArray;
 	}
 
 	public float[] getFloatArray() {

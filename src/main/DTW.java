@@ -14,50 +14,42 @@ public class DTW implements Comparable<DTW>{
 	 * steps: Number of steps taken for the path warpDist: Total distance warped
 	 */
 
-	private float[] x, y;
-	private float[][] path, dist, sum_dist;
+	private double[][] path, dist, sum_dist;
 	private int steps;
-	private float warpDist;
-	private float totalDist;
+	private double warpDist;
+	private double totalDist;
 
-	public DTW(float[] x, float[] y) {
-		this.x = x;
-		this.y = y;
-		dtw(x, y);
+	public DTW(double[][] dist) {
+		this.dist = dist;
+		dtw(this.dist);
 	}
 
 	// dtw() runs the Dynamic Time Warp and puts in values for the path and warpDist variables
-	public void dtw(float[] x, float[] y) {
-		dist = new float[x.length][y.length];
-		sum_dist = new float[x.length][y.length];
-		for (int i = 0; i < x.length; i++) {
-			for (int j = 0; j < y.length; j++) {
-				dist[i][j] = (x[i] - y[j]) * (x[i] - y[j]);
-			}
-		}
+	public void dtw(double[][] dist) {
+		sum_dist = new double[dist.length][dist[0].length];
 		sum_dist[0][0] = dist[0][0];
-		for (int i = 1; i < x.length; i++) {
+		for (int i = 1; i < dist.length; i++) {
 			sum_dist[i][0] = dist[i][0] + sum_dist[i - 1][0];
 		}
-		for (int i = 1; i < y.length; i++) {
+		for (int i = 1; i < dist[0].length; i++) {
 			sum_dist[0][i] = dist[0][i] + sum_dist[0][i - 1];
 		}
-		for (int j = 1; j < x.length; j++) {
-			for (int k = 1; k < y.length; k++) {
+		for (int j = 1; j < dist.length; j++) {
+			for (int k = 1; k < dist[0].length; k++) {
 				sum_dist[j][k] = getMin(sum_dist[j - 1][k - 1], sum_dist[j - 1][k], sum_dist[j][k - 1]) + dist[j][k];
 			}
 		}
 		getPath(sum_dist);
-		totalDist = sum_dist[x.length - 1][y.length - 1];
+		totalDist = sum_dist[dist.length - 1][dist[0].length - 1];
 		warpDist = totalDist / (steps + 1);
 	}
 
 	// getPath() for organization, separate between finding sum_dist and path
-	public void getPath(float[][] sum_dist) {
+	public void getPath(double[][] sum_dist) {
 		steps = 0;
-		int i = x.length - 1;
-		int j = y.length - 1;
-		path = new float[i + j][2];
+		int i = dist.length - 1;
+		int j = dist[0].length - 1;
+		path = new double[i + j][2];
 		path[steps][0] = i;
 		path[steps][1] = j;
 		while (i > 0 && j > 0) {
@@ -82,9 +74,9 @@ public class DTW implements Comparable<DTW>{
 		}
 	}
 
-	// getMin() finds minimum float between 3 floats
-	public float getMin(float x, float y, float z) {
-		float min = x;
+	// getMin() finds minimum double between 3 doubles
+	public double getMin(double x, double y, double z) {
+		double min = x;
 		min = (x > y) ? y : x;
 		min = (x > z) ? z : x;
 		return min;

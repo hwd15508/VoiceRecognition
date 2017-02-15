@@ -24,19 +24,23 @@ public class Main {
 
 		byte[] seq1 = rec1.getByteArray();
 		float[] seq_1 = rec1.getFloatArray();
+		double[] seq__1 = rec1.getDoubleArray();
 		byte[] seq2 = rec2.getByteArray();
 		float[] seq_2 = rec2.getFloatArray();
-
-		System.out.println("Audio Format:");
-		System.out.println("Sample1:\t" + rec1.getFormat().toString());
-		System.out.println("\n");
-
-		System.out.println("Byte Array Lengths");
-		System.out.println("Sample1:\t" + seq1.length);
-		System.out.println("Sample2:\t" + seq2.length);
-		System.out.println("\n");
-		
-		DTW dtw = new DTW(seq_1,seq_2);
+		double[] seq__2 = rec2.getDoubleArray();
+		System.out.println("Length of sequence 1:\t" + seq1.length);
+		System.out.println("Length of sequence 2:\t" + seq2.length);
+		MFCC mfcc1 = new MFCC(seq__1);
+		MFCC mfcc2 = new MFCC(seq__2);
+		double[][] sequence1 = mfcc1.process();
+		double[][] sequence2 = mfcc2.process();
+		double[][] input_sequence = new double[sequence1.length][sequence1[0].length];
+		for(int i = 0; i < sequence1.length; i++){
+			for(int j = 0; j < sequence1[i].length; j++){
+				input_sequence[i][j] = sequence1[i][j] - sequence2[i][j];
+			}
+		}
+		DTW dtw = new DTW(input_sequence);
 		System.out.println(dtw.getLimitedInfo());
 	}
 
